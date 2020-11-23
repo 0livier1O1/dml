@@ -3,8 +3,12 @@
 setwd("~/Documents/Rotterdam University/RA/dml/r")
 rm(list = ls())
 
+library(MASS) # for drawing from multivariate normal distribution
+library(scales)
 
+source("MLestimators.r")
 source("MonteCarloDML.r")
+source("momentEstimation.R")  
 
 #### Generate the data ####
 
@@ -44,7 +48,7 @@ y <- c("y.PLR")
 d <- c("gamma.PLR")
 
 case = 1
-methods <- c("Forest")
+methods <- c("Tree")
 
 input.y <- as.matrix(data[, y[case]])
 input.d <- as.matrix(data[, d[case]])
@@ -53,7 +57,17 @@ input.x <- x
 colnames(input.y) <- y[case]
 colnames(input.d) <- d[case]
 
+{# Playground
+  y = input.y
+  d = input.d
+  x = input.x
+  niterations=iter
+  methods=methods
+  #mcdml(y, d, x, niterations, methods)
+}
+
 mcdml(y = input.y, d = input.d, x = input.x, niterations=iter, methods=methods)
+
 
 
 
