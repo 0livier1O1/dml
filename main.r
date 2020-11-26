@@ -1,4 +1,7 @@
 # Main file for generating MC simulation 
+# Thanks are due to Nadja Van't Hoff for providing her code on which 95% of this program is based, 
+# I merely refactored, improved and extended the code to include non-linear cases. 
+
 
 setwd("~/Documents/Rotterdam University/RA/dml/r")
 rm(list = ls())
@@ -22,12 +25,14 @@ k <- 20 # number of explanatory var
 n <- 100 # sample size
 
 # define errors
+set.seed(5)
 error.PLR <- mvrnorm(n, mu=c(0,0), Sigma=diag(2))
 
 # Generate explanatory variables
 Sigma <- 0.2^t(sapply(1:k, function(i, j) abs(i-j), 1:k)) # Covariance structure
 x <- mvrnorm(n, mu=rep(0,k), Sigma = Sigma)
 colnames(x) <- paste("x", 1:k, sep="")
+x
 
 # define data for g and m
 x.main <- x[,1:10]
@@ -57,14 +62,6 @@ input.x <- x
 colnames(input.y) <- y[case]
 colnames(input.d) <- d[case]
 
-{# Playground
-  y = input.y
-  d = input.d
-  x = input.x
-  niterations=iter
-  methods=methods
-  #mcdml(y, d, x, niterations, methods)
-}
 
 mcdml(y = input.y, d = input.d, x = input.x, niterations=iter, methods=methods)
 

@@ -1,7 +1,9 @@
 source("tools.r")
 source("MLestimators.r")
 
-dml <- function(data, y, d, nfold, methods, ml.settings, model="plinear"){
+dml <- function(data, y, d, nfold, methods, ml.settings, small_sample_DML = FALSE, model="plinear"){
+  # small_sample_DML uses DML2 algorithm instead
+  
   # This function estimates dml 
   n <- nrow(data)
   M <- length(methods)
@@ -10,8 +12,11 @@ dml <- function(data, y, d, nfold, methods, ml.settings, model="plinear"){
   mlestimates <- matrix(list(), length(methods), nfold)
   MSE.y       <- matrix(0, M + 1, nfold) # MSE for main equation 
   MSE.d       <- matrix(0, M + 1, nfold) # MSE for confounding equation
-  TE          <- matrix(0, 1, M + 1) ## TODO : WHAT IS THIS ? 
-  STE         <- matrix(0, 1, M + 1) ## TODO : WHAT IS THIS ? 
+  TE          <- matrix(0, 1, M + 1) # Treatment effect DML
+  STE         <- matrix(0, 1, M + 1) # Standard errors of DML
+  
+  y.resid.pooled <- vector("list", M + 1) # stacked residuals across sample splits
+  d.resid.pooled <- vector("list", M + 1) # stacked residuals across sample splits
   
   if (nfold == 1) {
     cv.group <- rep(1, n)
@@ -32,6 +37,7 @@ dml <- function(data, y, d, nfold, methods, ml.settings, model="plinear"){
       sample.main <- as.data.frame(data[obs.main, ])
       sample.aux  <- as.data.frame(data[obs.aux, ])
       
+      # Estimate ATE in the PLR model
       if (model == "plinear") {
         mlestimates[[m, f]] <- mlestim(main=sample.main, aux=sample.aux, y, d, method=methods[m], ml.settings=ml.settings)
         
@@ -39,51 +45,94 @@ dml <- function(data, y, d, nfold, methods, ml.settings, model="plinear"){
         MSE.d[m, f]              <- mlestimates[[m, f]]$d.error
         
         # model residuals for moment equation estimation
-        lm.fit.yresid       <- lm(as.matrix(mlestimates[[m, f]]$y.resid) ~ as.matrix(mlestimates[[m, f]]$d.resid) - 1);
-        ate                 <- lm.fit.yresid$coef;
+        yresid = mlestimates[[m, f]]$y.resid
+        dresid = mlestimates[[m, f]]$d.resid
+        
+        lm.fit.yresid       <- lm(as.matrix(yresid) ~ as.matrix(dresid) - 1); # Score function estimation
+        ate                 <- lm.fit.yresid$coef; 
         HCV.coefs           <- vcovHC(lm.fit.yresid, type = 'HC') # Heteroskedasticity consistent covariance matrix
-        STE[1, f]           <- ( 1/(nfold^2) ) * (diag(HCV.coefs)) + STE[1, f] 
-        TE[1, f]            <- ate/nfold + TE[1, f]
+        STE[1, m]           <- ( 1/(nfold^2) ) * (diag(HCV.coefs)) + STE[1, m]  # DML1 -> added to the average over the folds
+        TE[1, m]            <- ate/nfold  + TE[1, m] # DML1
         
-        # TODO: FIX THIS 
-        #ypool[[k]]             <- c(ypool[[k]], cond.comp[[k,j]]$ry)
-        #zpool[[k]]             <- c(zpool[[k]], cond.comp[[k,j]]$rz)
+        # Gather the residuals for DML2 
+        y.resid.pooled[[m]]             <- c(y.resid.pooled[[m]], yresid)
+        d.resid.pooled[[m]]             <- c(d.resid.pooled[[m]], dresid)
         
-        
+      
         # MSE1[(length(methods)+1),j] <- error(rep(mean(datause[,y], na.rm = TRUE), length(dataout[!is.na(dataout[,y]),y])), dataout[!is.na(dataout[,y]),y])$err
         # MSE2[(length(methods)+1),j] <- error(rep(mean(datause[,d], na.rm = TRUE), length(dataout[!is.na(dataout[,d]),d])), dataout[!is.na(dataout[,d]),d])$err
         
       }
     } # end folds iteration
-    
-    # Identify best performing methods for both equation of the "plinear" (partially linear) model
+
     
   } # end methods iteration
   
+  # Identify best performing methods for both equation of the "plinear" (partially linear) model  
   if(model=="plinear"){
     
     if(M>1){
-      min1 <- which.min(rowMeans(MSE1[1:M, ]))
-      min2 <- which.min(rowMeans(MSE2[1:M, ]))
+      min1 <- which.min(rowMeans(MSE.y[1:M, ]))
+      min2 <- which.min(rowMeans(MSE.d[1:M, ]))
     }
     else if(M==1){
-      min1 <- which.min(mean(MSE1[1, ]))
-      min2 <- which.min(mean(MSE2[1, ]))
+      min1 <- which.min(mean(MSE.y[1, ]))
+      min2 <- which.min(mean(MSE.d[1, ]))
       
     }
   }
   
   # Re estimate the main quantities with the best methods
-  
   for (f in 1:nfold){
     if (model=="plinear"){
-      lm.fit.yresid       <- lm(as.matrix(mlestimates[[min1, f]]$y.resid) ~ as.matrix(mlestimates[[min2, f]]$d.resid) - 1);
+      yresid = mlestimates[[min1, f]]$y.resid
+      dresid = mlestimates[[min2, f]]$d.resid
+      
+      lm.fit.yresid       <- lm(as.matrix(yresid) ~ as.matrix(dresid) - 1); # Score function estimation
       ate                 <- lm.fit.yresid$coef;
       HCV.coefs           <- vcovHC(lm.fit.yresid, type = 'HC') # Heteroskedasticity consistent covariance matrix
-      STE[1, M+1]           <- ( 1/(nfold^2) ) * (diag(HCV.coefs)) + STE[1, M + 1]  
-      TE[1, M+1]            <- ate/nfold + TE[1, M + 1] # TODO why are STE AND TE ADDED TO THE PREVIOUS ONE 
+      STE[1, M+1]         <- ( 1/(nfold^2) ) * (diag(HCV.coefs)) + STE[1, M + 1]  
+      TE[1, M+1]          <- ate/nfold + TE[1, M + 1] 
+      
+      y.resid.pooled[[M + 1]]  <- c(y.resid.pooled[[M + 1]], yresid) # This corresponds to the best 
+      d.resid.pooled[[M + 1]]  <- c(d.resid.pooled[[M + 1]], dresid)
+      
     }
   }
+  
+  # DML2 estimation
+  # TODO REMOVE THE LOOP, JUST USE POOLED as matrix, not vectors
+  if (small_sample_DML) {
+    for (m in 1:M+1) {
+      if(model=="plinear"){
+        yresid = y.resid.pooled[[m]]
+        dresid = d.resid.pooled[[m]]
+        
+        lm.fit.yresid     <- lm(as.matrix(yresid) ~ as.matrix(dresid) - 1); # Score function estimation
+        ate               <- lm.fit.yresid$coef;
+        HCV.coefs         <- vcovHC(lm.fit.yresid, type = 'HC');
+        STE[1, m]         <- (diag(HCV.coefs))
+        TE[1, m]          <- ate
+      }
+    }
+  }
+  
+  # Prepare results
+  results    <- matrix(0, 2, (length(methods)+1)) # (ATE + SE) x M matrix
+  colnames(results)  <- c(methods, "best") 
+  
+  rownames(MSE.y)     <- c(methods, "best") 
+  rownames(MSE.d)     <- c(methods, "best") 
+  rownames(results)   <- c("ATE", "se")
+  
+  
+  results[1,]         <- colMeans(TE)
+  results[2,]         <- sqrt((STE))
+  
+  table <- rbind(results, rowMeans(MSE.y), rowMeans(MSE.d)) 
+  rownames(table)[3:4]   <- c("MSE[Y|X]", "MSE[D|X]") 
+  
+  return(table)
   
 }
 
@@ -129,7 +178,7 @@ mlestim <- function(main, aux, y, d, x, method, ml.settings) {
   estimator.fit.y <- ml.estimator(main=main, aux=aux, formula=formula.y, args=args)
   estimator.fit.d <- ml.estimator(main=main, aux=aux, formula=formula.d, args=args)
   
-  ## TO DO: if (binary.d) mis.z 
+  ## TODO Add binary option for z
   
   y.pred  <- estimator.fit.y$yhat.aux
   y.resid <- estimator.fit.y$resid.aux
