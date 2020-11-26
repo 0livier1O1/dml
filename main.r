@@ -62,7 +62,12 @@ input.x <- x
 colnames(input.y) <- y[case]
 colnames(input.d) <- d[case]
 
-
+niterations = 10
+{
+  y = input.y
+  d = input.d
+  x = input.x
+}
 mcdml(y = input.y, d = input.d, x = input.x, niterations=iter, methods=methods)
 
 
