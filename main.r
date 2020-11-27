@@ -20,7 +20,7 @@ c1 <- c(-3, -5, -1, -3, -1, 1, 3, 1, -1, 3) # 10 for g
 c2 <- c(-1, -3, 1, -1, 3, 3, 5) # 7 for m
 
 theta <- 2 # coefficient of interest
-iter <- 100 # number of iterations in the Monte Carlo simulations
+iter <- 10 # number of iterations in the Monte Carlo simulations
 k <- 20 # number of explanatory var
 n <- 100 # sample size
 
@@ -53,7 +53,7 @@ y <- c("y.PLR")
 d <- c("gamma.PLR")
 
 case = 1
-methods <- c("Tree")
+methods <- c("Tree", "Forest")
 
 input.y <- as.matrix(data[, y[case]])
 input.d <- as.matrix(data[, d[case]])
@@ -62,16 +62,10 @@ input.x <- x
 colnames(input.y) <- y[case]
 colnames(input.d) <- d[case]
 
-niterations = 10
 {
   y = input.y
   d = input.d
   x = input.x
 }
-mcdml(y = input.y, d = input.d, x = input.x, niterations=iter, methods=methods)
-
-
-
-
-
+results <- mcdml(y = input.y, d = input.d, x = input.x, niterations=iter, methods=methods)
 

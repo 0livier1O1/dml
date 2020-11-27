@@ -31,6 +31,7 @@ mcdml <- function(y, d, x, niterations, methods){
   package_used <- c('MASS', 'sandwich', 'rpart')
   
   r <- foreach(k = 1:niterations, .combine='rbind', .inorder=FALSE, .packages=package_used) %dopar% { 
+    cat(k)
     dml.result <- dml(data, y, d, nfold, methods=methods, ml.settings=ml.settings, small_sample_DML = FALSE, model="plinear")
     data.frame(t(dml.result[1,]), t(dml.result[2,]))
   }

@@ -21,6 +21,7 @@ dml <- function(data, y, d, nfold, methods, ml.settings, small_sample_DML = FALS
   if (nfold == 1) {
     cv.group <- rep(1, n)
   } else {
+    set.seed(5)
     split      <- runif(n)
     cv.group   <- as.numeric(cut(split, quantile(split, probs = seq(0, 1, 1/nfold)), include.lowest = TRUE))  
   }
