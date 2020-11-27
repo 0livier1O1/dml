@@ -20,7 +20,7 @@ c1 <- c(-3, -5, -1, -3, -1, 1, 3, 1, -1, 3) # 10 for g
 c2 <- c(-1, -3, 1, -1, 3, 3, 5) # 7 for m
 
 theta <- 2 # coefficient of interest
-iter <- 100 # number of iterations in the Monte Carlo simulations
+iter <- 50 # number of iterations in the Monte Carlo simulations
 k <- 20 # number of explanatory var
 n <- 100 # sample size
 
@@ -32,7 +32,6 @@ error.PLR <- mvrnorm(n, mu=c(0,0), Sigma=diag(2))
 Sigma <- 0.2^t(sapply(1:k, function(i, j) abs(i-j), 1:k)) # Covariance structure
 x <- mvrnorm(n, mu=rep(0,k), Sigma = Sigma)
 colnames(x) <- paste("x", 1:k, sep="")
-x
 
 # define data for g and m
 x.main <- x[,1:10]
@@ -53,7 +52,7 @@ y <- c("y.PLR")
 d <- c("gamma.PLR")
 
 case = 1
-methods <- c("Tree")
+methods <- c("Boosting", "Tree", "Forest", "Nnet", "Lasso", "Elnet", "Ridge")
 
 input.y <- as.matrix(data[, y[case]])
 input.d <- as.matrix(data[, d[case]])
@@ -62,11 +61,10 @@ input.x <- x
 colnames(input.y) <- y[case]
 colnames(input.d) <- d[case]
 
-
-mcdml(y = input.y, d = input.d, x = input.x, niterations=iter, methods=methods)
-
-
-
-
-
+{
+  y = input.y
+  d = input.d
+  x = input.x
+}
+results <- mcdml(y = input.y, d = input.d, x = input.x, niterations=iter, methods=methods)
 

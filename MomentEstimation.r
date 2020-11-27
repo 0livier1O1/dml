@@ -149,21 +149,36 @@ mlestim <- function(main, aux, y, d, x, method, ml.settings) {
   covariates <- covariates[! covariates %in% c(y, d) ]
   formula.x <- paste(covariates, collapse="+")
   
+  # if (method %in% c("Nnet", "Lasso")){
+  #   formuma.x <- paste("(", formula.x , ")^2", sep="")
+  # }
+  
   args = ml.settings[[method]]
   
   # select ML estimating method
-  if (method=="Tree") {
+  # ml.estimator will be a different function depending on the method
+  
+  if (method=="Tree") {                                    # Decision Tree
     args[which(names(args) %in% c("reg_method","clas_method"))] <-  NULL
     ml.estimator <- function(...) tree(...)
-  } else if (method %in% c("Forest", "TForest")) {
+  } 
+  else if (method %in% c("Forest", "TForest")) {           # (tuned) Random Forest
     tune = method == "TForest"
     
     ml.estimator <- function(...) RF(..., tune=tune) 
-  } else if (method == "Lasso"){
-    # for linear models formula
-    formuma.x <- paste("(", covariates , ")^2", sep="")
-    
-    ml.estimator <- function(...) print("Lasso not defined yet")
+  } 
+  else if (method == "Nnet"){                              # Neural Nets
+    ml.estimator <- function(...) nnetF(...)
+  } 
+  else if (method %in% c("Ridge", "Lasso", "Elnet")){      # Penalised Regression
+    alphas = list(Ridge=0, Lasso=1, Elnet=0.5)
+    alpha = alphas[method]
+    ml.estimator <- function(...) lassoF(..., alpha)
+  }
+  else if (method == "Boosting"){                          # Boosting
+    distribution = args[["reg_dist"]]
+    args[which(names(args) %in% c("clas_dist","reg_dist"))] <- NULL
+    ml.estimator <- function(...) boost(..., distribution)
   }
   
   # Generate formula as input to ML estimation methods
@@ -171,10 +186,7 @@ mlestim <- function(main, aux, y, d, x, method, ml.settings) {
   formula.d <- as.formula(paste(d, "~", formula.x))
   
   
-  ## PROCEED WITH ESTIMATION ##
-  {  ## TODO PLAYGROUNDDD
-    formula=formula.y
-  }
+  ## PROCEED WITH ML ESTIMATION ##
   estimator.fit.y <- ml.estimator(main=main, aux=aux, formula=formula.y, args=args)
   estimator.fit.d <- ml.estimator(main=main, aux=aux, formula=formula.d, args=args)
   
