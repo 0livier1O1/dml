@@ -1,6 +1,6 @@
 # Main file for generating MC simulation 
-# Thanks are due to Nadja Van't Hoff for providing her code on which 95% of this program is based, 
-# I merely refactored, improved and extended the code to include non-linear cases. 
+# Thanks are due to Nadja Van't Hoff for helping with getting me set up 
+# I merely refactored the code available at https://github.com/demirermert/MLInference for my own needs 
 
 rm(list = ls())
 options(warn=-1)
@@ -75,8 +75,8 @@ source("MomentEstimation.r")
 ####################################################################################################
 
 theta <- 2 # coefficient of interest
-iter <- 2 # number of iterations in the Monte Carlo simulations
-k <- 20 # number of explanatory var
+iter <- 100 # number of iterations in the Monte Carlo simulations
+k <- 90 # number of explanatory var
 n <- 100 # sample size
 
 # Generate x
@@ -140,6 +140,6 @@ results.ols <- summary(lm(input.y ~ input.d + input.x))$coefficients[2,1]
 results.PLR[, 1] <- as.numeric(results.ols)
 results.PLR[, 2:(length(methods) + 2)] <- as.numeric(results.dml[1, ])
 
-# write.csv(results.PLR, paste0("PLR_", sample(1:1000000, 1),".csv", sep=""))
+write.csv(results.PLR, paste0("PLR_", sample(1:1000000, 1),".csv", sep=""))
 results.dml
 results.ols
