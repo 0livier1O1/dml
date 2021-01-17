@@ -19,7 +19,7 @@ source("MomentEstimation.r")
 # #### Generate the data ####
 # 
 # theta <- 2 # coefficient of interest
-# iter <- 2 # number of iterations in the Monte Carlo simulations
+# iter <- 2 # number of splits inside the DML
 # k <- 20 # number of explanatory var
 # n <- 100 # sample size
 # 
@@ -75,7 +75,7 @@ source("MomentEstimation.r")
 ####################################################################################################
 
 theta <- 2 # coefficient of interest
-iter <- 100 # number of iterations in the Monte Carlo simulations
+iter <- 100 # number of splits inside the DML
 k <- 90 # number of explanatory var
 n <- 100 # sample size
 
