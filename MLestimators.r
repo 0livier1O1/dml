@@ -3,12 +3,12 @@
 tree <- function(main, aux, formula, args){
   # main is the main subsample
   # aux is the auxiliary subsample 
-  tree            <- do.call(rpart, append(list(formula=formula, data=main), args))  # estimate with rpart (trees)
-  complexityParam <- tree$cptable[which.min(tree$cptable[,"xerror"]),"CP"]
-  prunedTree      <- prune(tree, cp=complexityParam)
+  trees           <- do.call(rpart, append(list(formula=formula, data=main), args))  # estimate with rpart (trees)
+  complexityParam <- trees$cptable[which.min(trees$cptable[,"xerror"]),"CP"]
+  prunedTree      <- prune(trees, cp=complexityParam)
   
   # Compute residuals on main sample
-  linearModel    <- lm(formula,  x = TRUE, y = TRUE, data=main); 
+  linearModel    <- lm(formula,  x = TRUE, y = TRUE, data=main)
   yhat.main      <- predict(prunedTree, newdata=main)
   resid.main     <- linearModel$y - yhat.main
   
@@ -29,6 +29,8 @@ RF <- function(main, aux, formula, args, tune=FALSE){
   # main is the main subsample
   # aux is the auxiliary subsample 
   # TODO: Allow tuning
+  
+  set.seed(1)
   forest <- do.call(randomForest, append(list(formula=formula, data=main), args))
   
   linearModel    <- lm(formula,  x = TRUE, y = TRUE, data=main); 
@@ -50,7 +52,6 @@ RF <- function(main, aux, formula, args, tune=FALSE){
 nnetF <- function(main, aux, formula, args){
   # main is the main subsample
   # aux is the auxiliary subsample 
-  
   # TODO WHY do we use min/maxs
   
   maxs <- apply(main, 2, max) 
@@ -83,6 +84,7 @@ nnetF <- function(main, aux, formula, args){
 lassoF <- function(main, aux, formula, args, alpha){
   # main is the main subsample
   # aux is the auxiliary subsample 
+  set.seed(1)
   linearModel    <- lm(formula,  x = TRUE, y = TRUE, data=main); 
   lasso          <- do.call(cv.glmnet, append(list(x=linearModel$x[ ,-1], y=linearModel$y, alpha=alpha), args))
   
@@ -106,7 +108,6 @@ lassoF <- function(main, aux, formula, args, alpha){
 boost <- function(main, aux, formula, args, distribution, ntrees=100){
   # main is the main subsample
   # aux is the auxiliary subsample 
-  
   boostfit       <- do.call(gbm, append(list(formula=formula, data=main, distribution=distribution), args))
   
   # Compute residuals on main sample
@@ -125,5 +126,3 @@ boost <- function(main, aux, formula, args, distribution, ntrees=100){
               resid.aux=resid.aux, 
               model=boostfit));
 }
-
-## TODO Add ensemble
