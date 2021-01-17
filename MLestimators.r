@@ -29,8 +29,6 @@ RF <- function(main, aux, formula, args, tune=FALSE){
   # main is the main subsample
   # aux is the auxiliary subsample 
   # TODO: Allow tuning
-  
-  set.seed(1)
   forest <- do.call(randomForest, append(list(formula=formula, data=main), args))
   
   linearModel    <- lm(formula,  x = TRUE, y = TRUE, data=main); 
@@ -84,7 +82,6 @@ nnetF <- function(main, aux, formula, args){
 lassoF <- function(main, aux, formula, args, alpha){
   # main is the main subsample
   # aux is the auxiliary subsample 
-  set.seed(1)
   linearModel    <- lm(formula,  x = TRUE, y = TRUE, data=main); 
   lasso          <- do.call(cv.glmnet, append(list(x=linearModel$x[ ,-1], y=linearModel$y, alpha=alpha), args))
   

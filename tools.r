@@ -1,5 +1,4 @@
 make.folds <- function(nfold, nobs){
-  set.seed(1)
   if (nfold == 1) {
     cv.group <- rep(1, nobs)
   } else {
