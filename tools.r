@@ -1,3 +1,14 @@
+make.folds <- function(nfold, nobs){
+  set.seed(1)
+  if (nfold == 1) {
+    cv.group <- rep(1, nobs)
+  } else {
+    split      <- runif(nobs)
+    
+    cv.group   <- as.numeric(cut(split, quantile(split, probs = seq(0, 1, 1/nfold)), include.lowest = TRUE))  
+  }
+  return(cv.group)
+}
 
 error <- function(y.pred, y){
   # Function to compute the root mean squarred error given a prediction and a truth

@@ -1,0 +1,10 @@
+# Shell files
+*.sh
+
+# System files
+.env
+.DS_Store
+
+# R System files
+.Rhistory
+.RData
