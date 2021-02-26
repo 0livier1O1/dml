@@ -1,6 +1,8 @@
 from dml.tools.utils import get_path_to_file
+from dml.tools.algebra import ols, iv_ols
 
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.linear_model import ElasticNet
@@ -10,6 +12,7 @@ from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from pprint import pprint as pp
+
 
 class DebiasedMachineLearningEstimator:
 
@@ -26,12 +29,12 @@ class DebiasedMachineLearningEstimator:
         self.g_ = g
 
         fold_seeds = np.random.randint(0, 1000, size=self.n_splits).tolist()
+        res = []
         for method in self.methods:
-            a = self._causal_estimation(method, fold_seeds)
-        return a
+             res.append(self._dml_with_method(method, fold_seeds))
+        return res
 
-    def _causal_estimation(self, method, fold_seeds):
-        # Compute folds here
+    def _dml_with_method(self, method, fold_seeds):
         X_ = self.X_
         y_ = self.y_
         g_ = self.g_
@@ -41,27 +44,43 @@ class DebiasedMachineLearningEstimator:
                             pre_dispatch='2 * n_jobs',
                             prefer='threads')
         # Some ML methods are very slow: If each split has to wait for ML methods to finish, some cores will be idle and
-        # this will create a
+        # this will create a bottleneck: Betty parallise accross split one method at at time
         dml_splits = parallel(delayed(self._parallel_estimate_single_split)(X_, y_, g_, i, method, fold_seeds[i])
                               for i in range(self.n_splits))
 
-        return dml_splits
+        return np.array(dml_splits).mean()
 
     def _parallel_estimate_single_split(self, X, y, g, split_idx, method, fold_seed):
-        # TODO Check that the same folds splits are used accross methods
         folds = KFold(n_splits=self.n_folds, shuffle=True, random_state=fold_seed)
+
+        TE = 0
 
         for fold, sets in enumerate(folds.split(X, y, g)):
             main_sample, aux_sample = sets
             X_main, y_main, g_main = X[main_sample], y[main_sample], g[main_sample]
             X_aux, y_aux, g_aux = X[aux_sample], y[aux_sample], g[aux_sample]
 
-            model_y = self._ml_estimation(X_main, y_main, method)  # TODO: Add settings
-            model_g = self._ml_estimation(X_main, g_main, method)  # TODO: Add settings
+            y_resid = self._debiased_residuals(X_main, y_main, X_aux, y_aux, method)
+            d_resid = self._debiased_residuals(X_main, g_main, X_aux, g_aux, method)
 
-        return split_idx
+            theta_hat = ols(d_resid, y_resid).item()  # The paper seem to say: We need IV with D_i => Not observed right?
+            # theta_hat = iv_ols(d_resid, g_main.reshape((-1, 1)), y_resid).item()
 
-    def _ml_estimation(self, X, y, method):
+            TE += theta_hat/self.n_folds
+
+        return TE
+
+    def _debiased_residuals(self, X_main, y_main, X_aux, y_aux, method):
+        # Fit on auxiliary sample
+        model_y = self._ml_estimation(X_aux, y_aux, method) # TODO: Add settings
+        # Predict on main sample
+        DecisionTreeRegressor._prune_tree()
+        y_pred = model_y.predict(X_main)
+        # Compute Debiased Residuals
+        residuals = y_main - y_pred
+        return residuals
+
+    def _ml_estimation(self, X, y, method) -> BaseEstimator:
         ml_regressors = {
             'Tree': DecisionTreeRegressor,
             'Forest': RandomForestRegressor,
@@ -70,6 +89,8 @@ class DebiasedMachineLearningEstimator:
             'Elnet': ElasticNet,
             'Boosting': AdaBoostRegressor
         }
+        # TODO Set params per method
+        # prepend _ml_ and call method on X, y
         estimator = ml_regressors[method]()
         if method in ['Lasso', 'Ridge']:
             l1_ratio = 1 if method == 'Lasso' else 0
@@ -77,13 +98,18 @@ class DebiasedMachineLearningEstimator:
 
         return estimator.fit(X, y)
 
+    def _ml_Tree(self, X, y):
+        model = DecisionTreeRegressor()
+        model.fit(X, y)
+        # TODO: Add tree prunning
+
 
 if __name__ == '__main__':
     lim = 150
-    data = pd.read_csv(get_path_to_file("data_2.csv"), index_col=0)
-    y = data.iloc[:lim, 0].to_numpy()
-    g = data.iloc[:lim, 1].to_numpy()
-    X = data.iloc[:lim, 2:].to_numpy()
+    data = pd.read_csv(get_path_to_file("data_1.csv"), index_col=0)
+    y = data.iloc[:, 0].to_numpy()
+    g = data.iloc[:, 1].to_numpy()
+    X = data.iloc[:, 2:].to_numpy()
 
-    dml = DebiasedMachineLearningEstimator(methods=['Tree'], n_folds=2, n_jobs=1, n_splits=10)
+    dml = DebiasedMachineLearningEstimator(methods=['Tree', 'Forest'], n_folds=2, n_jobs=1, n_splits=10)
     dml.fit(X, y, g)
