@@ -9,5 +9,5 @@
 *.Rhistory
 *.RData
 
-# CSV
-*.csv
+# Pycharm system folder
+.idea
