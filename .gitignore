@@ -6,5 +6,8 @@
 .DS_Store
 
 # R System files
-.Rhistory
-.RData
+*.Rhistory
+*.RData
+
+# CSV
+*.csv
