@@ -1,1 +1,1 @@
-I merely refactored the code available at https://github.com/demirermert/MLInference for my own needs 
+I merely refactored the code available at https://github.com/demirermert/MLInference for my own needs in R and started creating a class-based implementation of the DML estimator that aims to perform bottleneck-free parallel processing of DML splits
