@@ -25,7 +25,6 @@ dml <- function(data, y, d, nfold, methods, ml.settings, small_sample_DML = FALS
     
     # Cross validaty.ion groups  
     # TODO: Can be improved -> Use package
-    
     for(f in 1:nfold){
       obs.main <- cv.group != f 
       obs.aux <- cv.group == f
