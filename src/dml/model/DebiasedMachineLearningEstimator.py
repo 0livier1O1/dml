@@ -25,6 +25,10 @@ class DebiasedMachineLearningEstimator:
         self.methods = methods
         self.verbose = verbose
 
+    def __add__(self, other):
+        # TODO: Allow for easy consolidation of multipled DML object with smaller scripts for jobs in multiple batches
+        pass
+
     def fit(self, X=None, y=None, g=None):
         self.X_ = X
         self.y_ = y
@@ -46,7 +50,7 @@ class DebiasedMachineLearningEstimator:
                             pre_dispatch='2 * n_jobs',
                             prefer='threads')
         # Some ML methods are very slow: If each split has to wait for ML methods to finish, some cores will be idle and
-        # this will create a bottleneck: Betty parallise accross split one method at at time
+        # this will create a bottleneck: Better parallise accross split one method at at time
         dml_splits = parallel(delayed(self._parallel_estimate_single_split)(X_, y_, g_, i, method, fold_seeds[i])
                               for i in range(self.n_splits))
 
