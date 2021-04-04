@@ -1,5 +1,3 @@
-
-# Monte Carlo estimation of DML models
 library(MASS)
 library(rpart)
 library(sandwich)
@@ -9,9 +7,13 @@ library(glmnet)
 library(randomForest)
 library(nnet)
 library(matrixStats)
+library(snow)
+library(doParallel)
 
 source("MomentEstimation.r")
 source("MLestimators.r")
+source("tools.r")
+
 
 mcdml <- function(y, d, x, niterations, methods){
   # x is covariates
@@ -37,10 +39,17 @@ mcdml <- function(y, d, x, niterations, methods){
   
   ml.settings <- list(Tree=Tree, Forest=Forest, Nnet=Nnet, Lasso=Lasso, Boosting=Boosting, Ensemble=ensemble)
   ################################ MC Estimation ####################################
-  package_used <- c('MASS', 'sandwich', 'rpart')
+  package_used <- c('MASS', 'sandwich', 'rpart', 'randomForest', 'gbm', 'glmnet', 'randomForest', 'nnet', 'matrixStats', 
+                    'BBmisc')
   
+  ################## Parallelization accross NODES (CPUs) ###########################
+  
+  #clusters <- getMPIcluster()
+  registerDoParallel(detectCores()-1)
   r <- foreach(k = 1:niterations, .combine='rbind', .inorder=FALSE, .packages=package_used) %dopar% { 
     dml.result <- dml(data, y, d, nfold, methods=methods, ml.settings=ml.settings, small_sample_DML = TRUE, model="plinear")
+    cat(k)
+    cat('\n')
     data.frame(t(dml.result[1,]), t(dml.result[2,]))
   }
   r <- as.matrix(r)
