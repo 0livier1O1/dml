@@ -2,7 +2,11 @@ from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 
+from xgboost import XGBRFRegressor
+
 import lightgbm as lgbm
+import numpy as np
+
 
 
 def _ml_Tree(X, y, tune=True):
@@ -23,7 +27,11 @@ def _ml_Tree(X, y, tune=True):
 
 
 def _ml_Forest(X, y, tune=False):
-    model = RandomForestRegressor(n_estimators=200, n_jobs=1)
+    model = lgbm.LGBMRegressor(boosting_type='rf',
+                               n_estimators=100,
+                               feature_fraction= np.sqrt(X.shape[1]) / X.shape[1],
+                               subsample=0.632,
+                               subsample_freq=1)
     return model
 
 
