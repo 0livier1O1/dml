@@ -2,8 +2,12 @@ import numpy as np
 from numpy.linalg import inv
 
 
-def ols(X: np.ndarray, y: np.ndarray):
+def ols(X: np.ndarray, y: np.ndarray, fit_intercept=False):
     X, y = _1d_to_2d(X, y)
+    if fit_intercept:
+        intercept = [1] * X.shape[0]
+        if not intercept in X.transpose().tolist():
+            X = np.hstack((np.array(intercept).reshape((-1, 1)), X))
     xx = np.matmul(X.transpose(), X)
     xy = np.matmul(X.transpose(), y)
     return np.matmul(inv(xx), xy)

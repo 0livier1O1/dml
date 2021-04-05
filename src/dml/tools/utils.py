@@ -16,3 +16,6 @@ def get_path_to_file(filename):
         return 0
     else:
         return file_path[0]
+
+def generate_data(k=20, n=100):
+    pass
