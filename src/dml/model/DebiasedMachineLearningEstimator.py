@@ -1,12 +1,9 @@
 from dml.tools.utils import get_path_to_file
 from dml.tools.algebra import ols, iv_ols
-from dml.model.mlestimators import _ml_Tree, _ml_Forest, _ml_Boosting
+from dml.model.mlestimators import _ml_Tree, _ml_Forest, _ml_Boosting, _ml_Neural_Network, _ml_Elastic_Net, _ml_Ridge
 
 from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
 from sklearn.base import BaseEstimator
-from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.linear_model import ElasticNet
 
 from joblib import Parallel, delayed
 
@@ -15,9 +12,10 @@ import numpy as np
 import pandas as pd
 
 from pprint import pprint as pp
-from econml.dml import SparseLinearDML
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 
 class DML:
@@ -58,7 +56,7 @@ class DML:
 
         return np.array(dml_splits).mean()
 
-    def _parallel_estimate_single_split(self, X, y, t, split_idx, fold_seed):
+    def _parallel_estimate_single_split(self, X, y, t, split_idx, fold_seed, verbose=1):
         folds = KFold(n_splits=self.n_folds, shuffle=True, random_state=fold_seed)
 
         TE = 0
@@ -75,49 +73,45 @@ class DML:
 
             TE += theta_hat
 
+        if verbose > 0:
+            print('Split {}/{} Completed'.format(split_idx + 1, self.n_splits))
+
         return TE/self.n_folds
 
     def _debiased_residuals(self, X_main, y_main, X_aux, y_aux, method):
-        """
-        Function to partial out the nuissance function from the dependent variable
-        Parameters
-        ----------
-        X_main : Numpy Matrix
-            Matrix of confounders
-        y_main : Numpy vector
-            Vector of dependent variable
-        X_aux : Numpy Matrix
-
-        y_aux
-        method
-
-        Returns
-        -------
-
-        """
         # Fit on auxiliary sample
-        model_y = self._ml_estimation(X_aux, y_aux, method) # TODO: Add settings
+        method = method.replace(' ', '_')
+
+        model = self._ml_estimator(X_aux, y_aux, method)
+
         # Predict on main sample
-        y_pred = model_y.predict(X_main)
+        y_pred = model.predict(X_main).flatten()
+
         # Compute Debiased Residuals || Y - E[Y|X] or D - E[D|X]
         residuals = y_main - y_pred
         return residuals
 
-    def _ml_estimation(self, X, y, method) -> BaseEstimator:
+    def _ml_estimator(self, X, y, method: str) -> BaseEstimator:
         # TODO Set params per method
         # prepend _ml_ and call method on X, y
-        model = eval('_ml_' + method + '(X, y)')
 
-        if method in ['Lasso', 'Ridge']:
-            l1_ratio = 1 if method == 'Lasso' else 0
-            model.set_params(**{'l1_ratio': l1_ratio})
+        if method == 'Lasso':
+            model = _ml_Elastic_Net(X, y, l1_ratios=1)
+        else:
+            model = eval('_ml_' + method + '(X, y)')
 
-        return model.fit(X, y)
+        if method in ['Lasso', 'Ridge', 'Elastic Net', 'Neural Network']:
+            estimator = Pipeline([('scaler', StandardScaler()),
+                                  ('model', model)])
+        else:
+            estimator = model
+        estimator.fit(X, y)
+
+        return estimator
 
 
 if __name__ == '__main__':
     start = time.time()
-    lim = 150
     data = pd.read_csv(get_path_to_file("data_3.csv"), index_col=0)
     y = data.iloc[:, 0].to_numpy()
     t = data.iloc[:, 1].to_numpy()
@@ -130,10 +124,7 @@ if __name__ == '__main__':
     print(res_ols[-1])
 
     print('DML')
-    dml = DML(model_y='Forest', model_t='Forest', n_folds=2, n_jobs=6, n_splits=100)
+    dml = DML(model_y='Boosting', model_t='Boosting', n_folds=2, n_jobs=7, n_splits=100)
     res = dml.treatment_effect(X, y, t)
     print(res)
     print(time.time() - start)
-
-    # OLS result
-
