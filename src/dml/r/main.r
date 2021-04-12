@@ -17,19 +17,23 @@ source("MomentEstimation.r")
 
 iter <- 100
 
-data <- read.csv('~/uni/ra/dml/data/data_1.csv')
+data <- read.csv('~/uni/ra/dml/data/data_3.csv', row.names = 1)
 
 y <- c("y.PLR")
 d <- c("gamma.PLR")
 
-methods <- c("Tree", "Forest") #, "Nnet", "Elnet", "Boosting")
+methods <- c("Elnet") #, "Nnet", "Elnet", 
 
 input.y <- as.matrix(data[, y])
 input.d <- as.matrix(data[, d])
-input.x <- data[, !colnames(data) %in% c(y, d)]
+input.x <- as.matrix(data[, !colnames(data) %in% c(y, d)])
 
 colnames(input.y) <- y
 colnames(input.d) <- d
+
+
+results.ols <- summary(lm(input.y ~ input.d + input.x))$coefficients[2,1]
+results.ols
 
 cat('Starting DML \n')
 tic()
@@ -38,7 +42,6 @@ toc()
 cat('Finished DML \n')
 results.dml
 
-results.ols <- summary(lm(input.y ~ input.d + input.x))$coefficients[2,1]
 
 results.PLR <- matrix(NA, 1, length(methods) + 2)
 results.PLR[, 1] <- as.numeric(results.ols)
