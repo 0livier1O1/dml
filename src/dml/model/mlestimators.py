@@ -1,13 +1,14 @@
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import ElasticNetCV, RidgeCV, ElasticNet
 
-from xgboost import XGBRFRegressor
+from keras.models import Sequential
+from keras.layers.core import Dense
+from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
 
 import lightgbm as lgbm
 import numpy as np
-
-
 
 def _ml_Tree(X, y, tune=True):
     model = DecisionTreeRegressor()
@@ -25,15 +26,14 @@ def _ml_Tree(X, y, tune=True):
 
     return model
 
-
 def _ml_Forest(X, y, tune=False):
+    # model = RandomForestRegressor(n_estimators=200, n_jobs=1) # 1.69, 2.01
     model = lgbm.LGBMRegressor(boosting_type='rf',
                                n_estimators=100,
                                feature_fraction= np.sqrt(X.shape[1]) / X.shape[1],
                                subsample=0.632,
                                subsample_freq=1)
     return model
-
 
 def _ml_Boosting(X, y, tune=False):
     model = lgbm.LGBMRegressor(num_leaves=900,
@@ -60,4 +60,35 @@ def _ml_Boosting(X, y, tune=False):
     return model
 
 def _ml_Neural_Network(X, y, tune=True):
-    pass
+    # standardization
+    def single_hidden_layer():
+        perceptron = Sequential()
+        perceptron.add(Dense(10, input_dim=X.shape[1], kernel_initializer='normal', activation='elu'))
+        perceptron.add(Dense(1,  kernel_initializer='normal'))
+        perceptron.compile(loss='mean_squared_error', optimizer='adam')
+        return perceptron
+
+    model = KerasRegressor(build_fn=single_hidden_layer, nb_epoch=100, batch_size=5, verbose=0)
+
+    return model
+
+
+def _ml_Elastic_Net(X, y, tune=True, l1_ratios=None):
+    kfold = KFold(n_splits=4, shuffle=True, random_state=0)
+
+    if tune:
+        model = ElasticNetCV(cv=kfold,  n_alphas=70)
+
+        if l1_ratios is None:
+            l1_ratios = [.1, .5, .7, .9, .95, .99]
+
+        model.set_params(**{'l1_ratio': l1_ratios})
+
+    else:
+        model = ElasticNet(l1_ratio=l1_ratios)
+
+    return model
+
+def _ml_Ridge(X, y, tune=True):
+    model = RidgeCV()
+    return model
