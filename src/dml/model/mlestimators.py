@@ -1,6 +1,5 @@
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import ElasticNetCV, RidgeCV, ElasticNet
 
 from keras.models import Sequential

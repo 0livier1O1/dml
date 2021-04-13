@@ -1,3 +1,4 @@
+from dml.tools.dgp import dgp
 from dml.tools.utils import get_path_to_file
 from dml.tools.algebra import ols, iv_ols
 from dml.model.mlestimators import _ml_Tree, _ml_Forest, _ml_Boosting, _ml_Neural_Network, _ml_Elastic_Net, _ml_Ridge
@@ -29,7 +30,7 @@ class DML:
         self.verbose = verbose
 
     def __add__(self, other):
-        # TODO: Allow for easy consolidation of multipled DML object with smaller scripts for jobs in multiple batches
+        # TODO: Allow for easy consolidation of multipled DML object with smaller experiments for jobs in multiple batches
         pass
 
     def treatment_effect(self, X=None, y=None, t=None):
@@ -112,11 +113,11 @@ class DML:
 
 if __name__ == '__main__':
     start = time.time()
-    data = pd.read_csv(get_path_to_file("data_3.csv"), index_col=0)
-    y = data.iloc[:, 0].to_numpy()
-    t = data.iloc[:, 1].to_numpy()
-    X = data.iloc[:, 2:].to_numpy()
-
+    y, t, X = dgp(k=90, n=100)
+    # data = pd.read_csv(get_path_to_file("data_3.csv"), index_col=0)
+    # y = data.iloc[:, 0].to_numpy()
+    # t = data.iloc[:, 1].to_numpy()
+    # X = data.iloc[:, 2:].to_numpy()
 
     x = np.hstack((X, t.reshape(-1, 1)))
     res_ols = ols(x, y, fit_intercept=True)
