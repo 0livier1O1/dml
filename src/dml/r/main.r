@@ -17,12 +17,13 @@ source("MomentEstimation.r")
 
 iter <- 100
 
-data <- read.csv('~/uni/ra/dml/data/data_3.csv', row.names = 1)
+data <- data <- generate.data(k=90, n=100, dgp='nonlinear') 
+#read.csv('~/uni/ra/dml/data/data_3.csv', row.names = 1)
 
 y <- c("y.PLR")
 d <- c("gamma.PLR")
 
-methods <- c("Elnet") #, "Nnet", "Elnet", 
+methods <- c("Nnet") 
 
 input.y <- as.matrix(data[, y])
 input.d <- as.matrix(data[, d])

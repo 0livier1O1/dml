@@ -48,8 +48,6 @@ mcdml <- function(y, d, x, niterations, methods){
   registerDoParallel(detectCores()-1)
   r <- foreach(k = 1:niterations, .combine='rbind', .inorder=FALSE, .packages=package_used) %dopar% { 
     dml.result <- dml(data, y, d, nfold, methods=methods, ml.settings=ml.settings, small_sample_DML = TRUE, model="plinear")
-    cat(k)
-    cat('\n')
     data.frame(t(dml.result[1,]), t(dml.result[2,]))
   }
   r <- as.matrix(r)
