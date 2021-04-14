@@ -5,9 +5,9 @@ import pandas as pd
 
 from numpy import exp, log, abs
 from sklearn.preprocessing import MinMaxScaler
+from scipy.stats import norm
 
-
-def dgp(k=20, n=100, linear=False, corr = 0.2, T=2):
+def dgp(k=20, n=100, linear=False, T=2, corr = 0.2):
     cov = np.fromfunction(lambda i, j: corr**np.abs(i - j), (k, k))
     X = np.random.multivariate_normal(np.zeros(k), cov, size=n)
 
@@ -17,17 +17,17 @@ def dgp(k=20, n=100, linear=False, corr = 0.2, T=2):
     else:
         x_g = np.column_stack((
             exp(X[:, 0]) * exp(X[:, 1]),
-            exp(X[:, 3]) * exp(X[:, 4]),
-            X[:, 5] * X[:, 6], X[:, 7] * X[:, 8],
-            X[:, 9]**2, X[:, 10]**2,
-            log(abs(X[:, 11] + 1)) * log(abs(X[:, 12] + 1)),
-            log(abs(X[:, 4] + 1)), 1/X[:, 5]
+            exp(X[:, 2]) * exp(X[:, 3]),
+            X[:, 4] * X[:, 5], X[:, 6] * X[:, 7],
+            X[:, 8]**2, X[:, 9]**2,
+            log(abs(X[:, 10] + 1)) * log(abs(X[:, 11] + 1)),
+            log(abs(X[:, 3] + 1)), 1/X[:, 4], norm.pdf(X[:, 12:14])
         ))
         x_m = np.column_stack((
-            exp(X[:, 1]) * exp(X[:, 3]),
-            X[:, 14] * X[:, 15], X[:, 16] * X[:, 17],
-            X[:, 11]**2, log(abs(X[:, 9] + 1)) * log(abs(X[:, 18] + 1)),
-            1/X[:, 17], log(abs(X[:, 3] + 1))
+            exp(X[:, 0]) * exp(X[:, 2]),
+            X[:, 13] * X[:, 14], X[:, 15] * X[:, 16],
+            X[:, 10]**2, log(abs(X[:, 8] + 1)) * log(abs(X[:, 17] + 1)),
+            1/X[:, 16], log(abs(X[:, 2] + 1))
         ))
 
     coefs = [-5, -3, -1, 1, 3, 5]
