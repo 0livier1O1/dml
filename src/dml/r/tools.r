@@ -25,9 +25,6 @@ is.binary <- function(y){
 }
 
 generate.data <- function(k, n, theta=2, dgp='linear'){
-  # Generate Errors
-  error.PLR <- mvrnorm(n, mu=c(0,0), Sigma=diag(2))
-  
   # Generate explanatory variables
   Sigma <- 0.2^t(sapply(1:k, function(i, j) abs(i-j), 1:k)) # Covariance structure
   x <- mvrnorm(n, mu=rep(0,k), Sigma = Sigma)

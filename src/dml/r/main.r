@@ -13,31 +13,40 @@ library(BBmisc)
 source("tools.r")
 source("MLestimators.r")
 source("MonteCarloDML.r")
-source("MomentEstimation.r")
+source("MomentEstimation.r")  
 
-args = commandArgs(trailingOnly=TRUE)
-data.idx  <- 1 #as.integer(args[1])
-iteration <- 1 #as.integer(args[2])
-niter <- 7
+iter <- 100
 
-print(paste0("Reading Data File", data.idx))
-# data <- read.csv(paste0('data_', data.idx, '.csv'), row.names = 1)
-data <- generate.data(k=500, n=1000, dgp='nonlinear')
+data <- data <- generate.data(k=90, n=100, dgp='nonlinear') 
+#read.csv('~/uni/ra/dml/data/data_3.csv', row.names = 1)
 
 y <- c("y.PLR")
 d <- c("gamma.PLR")
 
-methods <- c("Tree")
+methods <- c("Nnet") 
 
 input.y <- as.matrix(data[, y])
 input.d <- as.matrix(data[, d])
-input.x <- data[, !colnames(data) %in% c(y, d)]
-
-cat(input.y[1:10])
+input.x <- as.matrix(data[, !colnames(data) %in% c(y, d)])
 
 colnames(input.y) <- y
 colnames(input.d) <- d
+
+
+results.ols <- summary(lm(input.y ~ input.d + input.x))$coefficients[2,1]
+results.ols
+
+cat('Starting DML \n')
 tic()
-results.dml <- mcdml(y = input.y, d = input.d, x = input.x, methods=methods, data.idx=data.idx, iter.idx=iteration, niterations=niter)
-cat('\n')
+results.dml <- mcdml(y = input.y, d = input.d, x = input.x, niterations=iter, methods=methods)
 toc()
+cat('Finished DML \n')
+results.dml
+
+
+results.PLR <- matrix(NA, 1, length(methods) + 2)
+results.PLR[, 1] <- as.numeric(results.ols)
+results.PLR[, 2:(length(methods) + 2)] <- as.numeric(results.dml[1, ])
+
+# write.csv(results.PLR, paste0("PLR_", sample(1:1000000, 1),".csv", sep=""))
+# results.ols

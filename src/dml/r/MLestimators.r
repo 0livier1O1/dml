@@ -5,7 +5,6 @@ tree <- function(main, aux, formula, args){
   # aux is the auxiliary subsample 
   trees           <- do.call(rpart, append(list(formula=formula, data=main), args))  # estimate with rpart (trees)
   complexityParam <- trees$cptable[which.min(trees$cptable[,"xerror"]),"CP"]
-  browser()
   prunedTree      <- prune(trees, cp=complexityParam)
   
   # Compute residuals on main sample

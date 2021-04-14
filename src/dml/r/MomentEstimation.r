@@ -25,6 +25,7 @@ dml <- function(data, y, d, nfold, methods, ml.settings, small_sample_DML = FALS
     
     # Cross validaty.ion groups  
     # TODO: Can be improved -> Use package
+    
     for(f in 1:nfold){
       obs.main <- cv.group != f 
       obs.aux <- cv.group == f
@@ -40,7 +41,7 @@ dml <- function(data, y, d, nfold, methods, ml.settings, small_sample_DML = FALS
         } else {
           mlestimates[[m, f]] <- mlestim(main=sample.main, aux=sample.aux, y, d, method=methods[m], ml.settings=ml.settings)  
         }
-
+        
         MSE.y[m, f]              <- mlestimates[[m, f]]$y.error
         MSE.d[m, f]              <- mlestimates[[m, f]]$d.error
         
@@ -60,7 +61,7 @@ dml <- function(data, y, d, nfold, methods, ml.settings, small_sample_DML = FALS
         y.resid.pooled[[m]]             <- c(y.resid.pooled[[m]], yresid)
         d.resid.pooled[[m]]             <- c(d.resid.pooled[[m]], dresid)
         
-
+        
         # MSE1[(length(methods)+1),j] <- error(rep(mean(datause[,y], na.rm = TRUE), length(dataout[!is.na(dataout[,y]),y])), dataout[!is.na(dataout[,y]),y])$err
         # MSE2[(length(methods)+1),j] <- error(rep(mean(datause[,d], na.rm = TRUE), length(dataout[!is.na(dataout[,d]),d])), dataout[!is.na(dataout[,d]),d])$err
         
@@ -83,7 +84,7 @@ dml <- function(data, y, d, nfold, methods, ml.settings, small_sample_DML = FALS
       
     }
   }
-
+  
   # Re estimate the main quantities with the best methods
   for (f in 1:nfold){
     if (model=="plinear"){
@@ -210,9 +211,6 @@ mlestim <- function(main, aux, y, d, method, ml.settings) {
               d.error=d.error,
               d.resid=d.resid))
 }
-
-
-
 
 ensemble.estim <- function(main, aux, y, d, ml.settings){
   
