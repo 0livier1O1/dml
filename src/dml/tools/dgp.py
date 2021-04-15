@@ -7,7 +7,11 @@ from numpy import exp, log, abs
 from sklearn.preprocessing import MinMaxScaler
 from scipy.stats import norm
 
-def dgp(k=20, n=100, linear=False, T=2, corr = 0.2):
+def get_dgp(model=1):
+    if model==1:
+        return model1
+
+def model1(k=20, n=100, linear=False, T=2, corr = 0.2):
     cov = np.fromfunction(lambda i, j: corr**np.abs(i - j), (k, k))
     X = np.random.multivariate_normal(np.zeros(k), cov, size=n)
 
@@ -43,5 +47,3 @@ def dgp(k=20, n=100, linear=False, T=2, corr = 0.2):
     y_PLR = T * gamma_PLR + scaler.fit_transform(x_g @ c_g) + error[:, 1].reshape((-1, 1))
 
     return y_PLR.flatten(), gamma_PLR.flatten(), X
-
-

@@ -1,17 +1,20 @@
+from dml.tools.utils import get_settings
+
 from pathlib import Path
 
 import pandas as pd
 import numpy as np
 
-k = 90
-n = 100
-theta = 2
-splits = 100
-methods = ['OLS', 'Tree', 'Lasso']
+settings = get_settings('lisa_sim.cfg')
 
-n_methods = len(methods) - 1
+simulations_folder = Path(__file__).parent.absolute() / 'simulations' / '{}dgp_{}k_{}n_{}splits_{}folds'.format(
+    settings['model'],
+    settings['k'],
+    settings['n'],
+    settings['n_splits'],
+    settings['n_folds']
+)
 
-simulations_folder = Path(__file__).parent.absolute() / 'simulations'
 sims = list(simulations_folder.glob(pattern='*.csv'))
 
 results = pd.DataFrame(columns=methods)

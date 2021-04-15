@@ -1,4 +1,4 @@
-from dml.tools.dgp import dgp
+from dml.tools.dgp import model1
 from dml.tools.utils import get_path_to_file
 from dml.tools.algebra import ols, iv_ols
 from dml.model.mlestimators import _ml_Tree, _ml_Forest, _ml_Boosting, _ml_Neural_Network, _ml_Elastic_Net, _ml_Ridge

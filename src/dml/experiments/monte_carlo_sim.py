@@ -1,5 +1,5 @@
 from dml.model.DebiasedMachineLearningEstimator import DML
-from dml.tools.dgp import dgp
+from dml.tools.dgp import model1
 from dml.tools.algebra import ols
 
 import time
@@ -10,7 +10,7 @@ M = 100 # Number of simulations
 k = 90
 n = 100
 theta = 2
-methods = ['OLS', 'Tree', 'Lasso', 'Elastic Net', 'Boosting', 'Neural Network']
+methods = ['OLS', 'Tree']
 n_methods = len(methods) - 1
 
 results = {method: [] for method in methods}
@@ -20,7 +20,7 @@ start = time.time()
 
 for i in range(M):
     print('Iteration {}'.format(i))
-    y, t, X = dgp(k, n, linear=False, T=theta)
+    y, t, X = model1(k, n, linear=False, T=theta)
 
     for method in methods:
         if method == 'OLS':
