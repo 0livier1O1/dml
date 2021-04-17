@@ -4,13 +4,12 @@ from sklearn.linear_model import ElasticNetCV, RidgeCV, ElasticNet
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neural_network import MLPRegressor
 
-
-from keras.models import Sequential
-from keras.layers.core import Dense, Activation
-from keras.layers import BatchNormalization
-from keras.regularizers import l2
-
-from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
+# from keras.models import Sequential
+# from keras.layers.core import Dense, Activation
+# from keras.layers import BatchNormalization
+# from keras.regularizers import l2
+#
+# from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
 
 import lightgbm as lgbm
 import numpy as np
@@ -67,13 +66,13 @@ def _ml_Boosting(X, y, tune=False):
 
 def _ml_Neural_Network(X, y, tune=True):
     # standardization
-    def single_hidden_layer():
-        perceptron = Sequential()
-        perceptron.add(Dense(10, input_dim=X.shape[1], kernel_initializer='normal',
-                       kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01)))
-        perceptron.add(Dense(1,  kernel_initializer='normal'))
-        perceptron.compile(loss='mean_squared_error', optimizer='adam')
-        return perceptron
+    # def single_hidden_layer():
+    #     perceptron = Sequential()
+    #     perceptron.add(Dense(10, input_dim=X.shape[1], kernel_initializer='normal',
+    #                    kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01)))
+    #     perceptron.add(Dense(1,  kernel_initializer='normal'))
+    #     perceptron.compile(loss='mean_squared_error', optimizer='adam')
+    #     return perceptron
     # model = KerasRegressor(build_fn=single_hidden_layer, nb_epoch=100, batch_size=30, verbose=0)
     model = MLPRegressor(hidden_layer_sizes=(10, ), solver='lbfgs',
                          max_iter=1200, learning_rate='adaptive', alpha=0.005)
