@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 
 M = 100 # Number of simulations
-k = 90
-n = 100
+k = 120
+n = 600
 theta = 2
 methods = ['OLS', 'Tree']
 n_methods = len(methods) - 1
@@ -20,7 +20,7 @@ start = time.time()
 
 for i in range(M):
     print('Iteration {}'.format(i))
-    y, t, X = model1(k, n, linear=False, T=theta)
+    y, t, X = model1(k, n, linear=True, T=theta)
 
     for method in methods:
         if method == 'OLS':
@@ -33,7 +33,7 @@ for i in range(M):
         else:
             print('Fitting DML with {}'.format(method))
 
-            model = DML(model_y=method, model_t=method, n_folds=3, n_jobs=6, n_splits=100, verbose=0, small_dml=True)
+            model = DML(model_y=method, model_t=method, n_folds=2, n_jobs=-1, n_splits=100, verbose=0, small_dml=True)
             res_dml = model.treatment_effect(X, y, t)
             results[method].append(res_dml)
 
