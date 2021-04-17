@@ -1,3 +1,7 @@
+# When runing from LISA
+import sys
+sys.path.append(0, '/home/omulkin')
+
 from dml.model.DebiasedMachineLearningEstimator import DML
 from dml.tools.dgp import *
 from dml.tools.algebra import ols
