@@ -3,6 +3,11 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.linear_model import ElasticNetCV, RidgeCV, ElasticNet
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neural_network import MLPRegressor
+from sklearn.exceptions import ConvergenceWarning
+
+from warnings import filterwarnings
+
+filterwarnings(action='ignore', category=ConvergenceWarning)
 
 # from keras.models import Sequential
 # from keras.layers.core import Dense, Activation
@@ -20,8 +25,8 @@ def _ml_Tree(X, y, tune=True):
                                   min_samples_split=round(30/3),
                                   ccp_alpha=0)
     if tune:
-        min_samples_leaf = [0.2, 0.3, 0.4, 0.49]
-        kfold = KFold(n_splits=5, shuffle=True, random_state=0)
+        min_samples_leaf = [0.1, 0.2, 0.3, 0.4, 0.49]
+        kfold = KFold(n_splits=10, shuffle=True, random_state=0)
         cv = GridSearchCV(estimator=model,
                           param_grid={'min_samples_leaf': min_samples_leaf},
                           return_train_score=False,
@@ -32,7 +37,7 @@ def _ml_Tree(X, y, tune=True):
     return model
 
 def _ml_Forest(X, y, tune=False):
-    model = RandomForestRegressor(n_estimators=100, n_jobs=1) # 1.69, 2.01
+    model = RandomForestRegressor(n_estimators=100, n_jobs=1, min_samples_leaf=5) # 1.69, 2.01
     # model = lgbm.LGBMRegressor(boosting_type='rf',
     #                            n_estimators=100,
     #                            feature_fraction= 0.3, # np.sqrt(X.shape[1]) / X.shape[1],
@@ -68,19 +73,18 @@ def _ml_Neural_Network(X, y, tune=True):
     # standardization
     # def single_hidden_layer():
     #     perceptron = Sequential()
-    #     perceptron.add(Dense(10, input_dim=X.shape[1], kernel_initializer='normal',
-    #                    kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01)))
+    #     perceptron.add(Dense(10, input_dim=X.shape[1], kernel_initializer='normal'))
     #     perceptron.add(Dense(1,  kernel_initializer='normal'))
     #     perceptron.compile(loss='mean_squared_error', optimizer='adam')
     #     return perceptron
     # model = KerasRegressor(build_fn=single_hidden_layer, nb_epoch=100, batch_size=30, verbose=0)
-    model = MLPRegressor(hidden_layer_sizes=(10, ), solver='lbfgs',
+    model = MLPRegressor(hidden_layer_sizes=(12, ), solver='lbfgs',
                          max_iter=1200, learning_rate='adaptive', alpha=0.005)
     return model
 
 
 def _ml_Elastic_Net(X, y, tune=True, l1_ratios=None):
-    kfold = KFold(n_splits=4, shuffle=True, random_state=0)
+    kfold = KFold(n_splits=10, shuffle=True, random_state=0)
 
     if tune:
         if l1_ratios is None:

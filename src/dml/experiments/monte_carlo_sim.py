@@ -7,10 +7,10 @@ import numpy as np
 import pandas as pd
 
 M = 100 # Number of simulations
-k = 120
-n = 600
+k = 90
+n = 100
 theta = 2
-methods = ['OLS', 'Tree']
+methods = ['OLS', 'Neural Network']
 n_methods = len(methods) - 1
 
 results = {method: [] for method in methods}
@@ -20,7 +20,7 @@ start = time.time()
 
 for i in range(M):
     print('Iteration {}'.format(i))
-    y, t, X = model1(k, n, linear=True, T=theta)
+    y, t, X = model1(k, n, linear=False, T=theta)
 
     for method in methods:
         if method == 'OLS':

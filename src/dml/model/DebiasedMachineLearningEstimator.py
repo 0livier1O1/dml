@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.stats import randint
 
 
@@ -28,9 +28,16 @@ class DML:
         self.verbose = verbose
         self.small_dml = small_dml
 
-    def __add__(self, other):
-        # TODO: Allow for easy consolidation of multipled DML object with smaller experiments for jobs in multiple batches
-        pass
+        self.rmse_y = False
+        self.rmse_t = False
+
+        self._is_estimated = False
+
+    def get_dml_rmse(self):
+        if self._is_estimated:
+            return self.rmse_y, self.rmse_t
+        else:
+            raise RuntimeError('Treatment effect not yet estimated.')
 
     def treatment_effect(self, X=None, y=None, t=None):
         self.X_ = X
@@ -38,7 +45,9 @@ class DML:
         self.t_ = t
 
         fold_seeds = randint.rvs(0, 1000, size=self.n_splits, random_state=0).tolist()
-        treatment_effect = self._dml_estimation(fold_seeds)
+        treatment_effect= self._dml_estimation(fold_seeds)
+        self._is_estimated = True
+
         return treatment_effect
 
     def _dml_estimation(self, fold_seeds):
@@ -52,11 +61,18 @@ class DML:
                             prefer='threads')
         dml_splits = parallel(delayed(self._parallel_estimate_single_split)(X_, y_, t_, i, fold_seeds[i])
                               for i in range(self.n_splits))
+        dml_splits = np.array(dml_splits)
 
-        return np.array(dml_splits).mean()
+        treamtnet_effect = dml_splits[:, 0].mean()
+        self.rmse_y, self.rmse_t = dml_splits[:, 1], dml_splits[:, 2]
+
+        return treamtnet_effect
 
     def _parallel_estimate_single_split(self, X, y, t, split_idx, fold_seed):
         folds = KFold(n_splits=self.n_folds, shuffle=True, random_state=fold_seed)
+
+        rmse_y = 0
+        rmse_t = 0
 
         TE = 0
         y_pool = []
@@ -67,8 +83,8 @@ class DML:
             X_main, y_main, t_main = X[main], y[main], t[main]
             X_aux, y_aux, t_aux = X[aux], y[aux], t[aux]
 
-            y_resid = self._debiased_residuals(X_main, y_main, X_aux, y_aux, self.model_y)
-            t_resid = self._debiased_residuals(X_main, t_main, X_aux, t_aux, self.model_t)
+            y_resid, error_y = self._debiased_residuals(X_main, y_main, X_aux, y_aux, self.model_y)
+            t_resid, error_t = self._debiased_residuals(X_main, t_main, X_aux, t_aux, self.model_t)
 
             y_pool += y_resid.tolist()
             t_pool += t_resid.tolist()
@@ -76,6 +92,8 @@ class DML:
             theta_hat = ols(t_resid, y_resid).item()
 
             TE += theta_hat/self.n_folds
+            rmse_y += error_y/self.n_folds
+            rmse_t += error_t/self.n_folds
 
         if self.small_dml:
             TE = ols(np.array(t_pool), np.array(y_pool))
@@ -83,7 +101,7 @@ class DML:
         if self.verbose == 1:
             print('Split {}/{} Completed'.format(split_idx + 1, self.n_splits))
 
-        return TE
+        return TE, rmse_y, rmse_t
 
     def _debiased_residuals(self, X_main, y_main, X_aux, y_aux, method):
         # Fit on auxiliary sample
@@ -96,7 +114,11 @@ class DML:
 
         # Compute Debiased Residuals || Y - E[Y|X] or D - E[D|X]
         residuals = y_main - y_pred
-        return residuals
+
+        # Compute MSE
+        rmse = np.sqrt(((y_pred-y_aux)**2).mean(axis=0))
+
+        return residuals, rmse
 
     def _ml_estimator(self, X, y, method: str) -> BaseEstimator:
         # TODO Set params per method
@@ -107,11 +129,13 @@ class DML:
         else:
             model = eval('_ml_' + method + '(X, y)')
 
-        if method in ['Lasso', 'Ridge', 'Elastic Net', 'Neural Network']:
-            estimator = Pipeline([('scaler', StandardScaler()),
+        if method in ['Lasso', 'Ridge', 'Elastic_Net', 'Neural_Network']:
+            scaler = MinMaxScaler() if method == 'Neural_Network' else StandardScaler()
+            estimator = Pipeline([('scaler', scaler),
                                   ('model', model)])
         else:
             estimator = model
+
         estimator.fit(X, y)
 
         return estimator
