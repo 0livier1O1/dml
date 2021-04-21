@@ -116,7 +116,7 @@ class DML:
         residuals = y_main - y_pred
 
         # Compute MSE
-        rmse = np.sqrt(((y_pred-y_aux)**2).mean(axis=0))
+        rmse = np.sqrt(((y_pred-y_main)**2).mean(axis=0))
 
         return residuals, rmse
 

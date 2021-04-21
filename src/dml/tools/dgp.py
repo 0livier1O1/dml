@@ -25,7 +25,7 @@ def model1(k=20, n=100, linear=False, T=2, corr = 0.2):
             X[:, 4] * X[:, 5], X[:, 6] * X[:, 7],
             X[:, 8]**2, X[:, 9]**2,
             log(abs(X[:, 10] + 1)) * log(abs(X[:, 11] + 1)),
-            log(abs(X[:, 3] + 1)), 1/X[:, 4], norm.pdf(X[:, 12:14])
+            log(abs(X[:, 3] + 1)), 1/X[:, 4]
         ))
         x_m = np.column_stack((
             exp(X[:, 0]) * exp(X[:, 2]),
