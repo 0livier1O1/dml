@@ -101,7 +101,7 @@ class DML:
         if self.verbose == 1:
             print('Split {}/{} Completed'.format(split_idx + 1, self.n_splits))
 
-        return TE, rmse_y, rmse_t
+        return TE.item(), rmse_y, rmse_t
 
     def _debiased_residuals(self, X_main, y_main, X_aux, y_aux, method):
         # Fit on auxiliary sample
