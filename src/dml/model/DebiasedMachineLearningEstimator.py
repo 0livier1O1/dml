@@ -96,12 +96,12 @@ class DML:
             rmse_t += error_t/self.n_folds
 
         if self.small_dml:
-            TE = ols(np.array(t_pool), np.array(y_pool))
+            TE = ols(np.array(t_pool), np.array(y_pool)).item()
 
         if self.verbose == 1:
             print('Split {}/{} Completed'.format(split_idx + 1, self.n_splits))
 
-        return TE.item(), rmse_y, rmse_t
+        return TE, rmse_y, rmse_t
 
     def _debiased_residuals(self, X_main, y_main, X_aux, y_aux, method):
         # Fit on auxiliary sample
