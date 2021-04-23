@@ -15,15 +15,15 @@ source("MLestimators.r")
 source("MonteCarloDML.r")
 source("MomentEstimation.r")  
 
-iter <- 100
-
-data <- data <- generate.data(k=540, n=600, dgp='nonlinear') 
-#read.csv('~/uni/ra/dml/data/data_3.csv', row.names = 1)
+iter <- 50
+set.seed(1)
+# data <- data <- generate.data(k=90, n=100, dgp='nonlinear') 
+data <- read.csv('~/uni/ra/dml/data/data_3.csv', row.names = 1)
 
 y <- c("y.PLR")
 d <- c("gamma.PLR")
 
-methods <- c("Tree", "Lasso", "Forest", "Elnet", "Boosting", "Nnet") 
+methods <- c("Lasso") #, "Nnet", "Forest", "Elnet", "Boosting", "Nnet") 
 
 input.y <- as.matrix(data[, y])
 input.d <- as.matrix(data[, d])

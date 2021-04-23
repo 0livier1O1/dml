@@ -61,6 +61,8 @@ nnetF <- function(main, aux, formula, args){
   NN  <- do.call(nnet, append(list(formula=formula, data=main, linout=FALSE), args))  
   y <- toString(as.list(formula)[[2]]) # extract the y variable from the formula
   
+  browser()
+  
   # Compute residuals on main sample
   linearModel    <- lm(formula,  x = TRUE, y = TRUE, data=main); 
   yhat.main      <- predict(NN, main)

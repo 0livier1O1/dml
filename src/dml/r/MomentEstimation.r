@@ -191,6 +191,7 @@ mlestim <- function(main, aux, y, d, method, ml.settings) {
   
   
   ## PROCEED WITH ML ESTIMATION ##
+  browser()
   estimator.fit.y <- ml.estimator(main=main, aux=aux, formula=formula.y, args=args)
   estimator.fit.d <- ml.estimator(main=main, aux=aux, formula=formula.d, args=args)
   
